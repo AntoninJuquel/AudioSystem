@@ -12,7 +12,7 @@ using UnityEngine;
 namespace AudioSystem
 {
     /// <summary>
-    /// Do not add this script in the inspector. Just call the static methods from your own scripts or use the AudioSource extension methods.
+    /// Call the static methods from your own scripts or use the AudioSource extension methods.
     /// </summary>
     public class AudioManager : MonoBehaviour
     {
@@ -39,8 +39,13 @@ namespace AudioSystem
 
         private void Awake()
         {
-            DontDestroyOnLoad(gameObject);
-            _instance = this;
+            if (_instance)
+                Destroy(gameObject);
+            else
+            {
+                DontDestroyOnLoad(gameObject);
+                _instance = this;
+            }
         }
 
         private void OnEnable()
