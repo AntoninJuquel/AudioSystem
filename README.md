@@ -1,8 +1,7 @@
 # AudioSystem
- Fork from https://assetstore.unity.com/packages/tools/audio/sound-manager-audio-sound-and-music-manager-for-unity-56087?aid=1011lGnL&utm_campaign=unity_affiliate&utm_medium=affiliate&utm_source=partnerize-linkmaker
+Fork from https://assetstore.unity.com/packages/tools/audio/sound-manager-audio-sound-and-music-manager-for-unity-56087?aid=1011lGnL&utm_campaign=unity_affiliate&utm_medium=affiliate&utm_source=partnerize-linkmaker
  
-Simple Sound Manager
- (c) 2016 Digital Ruby, LLC
+Simple Audio System (c) 2016 Digital Ruby, LLC
  
 https://www.digitalruby.com
 
@@ -10,11 +9,9 @@ Version 1.1.1
 
 ## Change Log :
 
-1.1.1	-	Add option to not stop music when scene loads.
-
-1.1		-	Added ability to persist music between scene changes.
-
-1.0		-	Initial Release.
+- 1.1.1	: Add option to not stop music when scene loads.
+- 1.1 : Added ability to persist music between scene changes.
+- 1.0 : Initial Release.
 
 Simple Sound Manager is a single script that can manage all your sounds and music in your Unity game.
 
@@ -26,8 +23,9 @@ Duplicate audio clip plays are quieted smartly to ensure nice, crisp sound.
 
 Music sounds have a persist parameter. This allows the music to persist between scene changes.
 
-## MUSIC
-  It is recommended that you create a script and prefab with all your music audio sources underneath it. You can then call the Simple Sound API to play these music audio sources. Every scene will need to have this prefab.
+## Music
+
+It is recommended that you create a script and prefab with all your music audio sources underneath it. You can then call the Simple Sound API to play these music audio sources. Every scene will need to have this prefab.
 
 For additive level loading, set StopSoundsOnLevelLoad to false on the sound manager script.
 
