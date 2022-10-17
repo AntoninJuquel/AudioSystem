@@ -10,13 +10,15 @@ namespace AudioSystem
 
         protected override void Awake()
         {
-            base.Awake();
             Instance = this;
+            base.Awake();
         }
 
-        public void SetMixerValue(string groupName, float value)
+        public bool SetMixerValue(string groupName, float value)
         {
-            mixer.SetFloat(groupName, Mathf.Log10(value) * 20f);
+            if (mixer) return mixer.SetFloat(groupName, Mathf.Log10(value) * 20f);
+            Debug.LogError("No audio mixer set in audio manager", gameObject);
+            return false;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace AudioSystem
@@ -14,7 +15,11 @@ namespace AudioSystem
             _slider = GetComponent<Slider>();
             _slider.minValue = 0.0001f;
             _slider.maxValue = 1f;
-            _slider.value = PlayerPrefs.GetFloat(name, 1f);
+            _slider.value = PlayerPrefs.GetFloat(groupName, 1f);
+            if (groupName == string.Empty)
+            {
+                Debug.LogError($"Variable groupName not assigned on {name}", gameObject);
+            }
         }
 
         private void Start()
@@ -34,8 +39,8 @@ namespace AudioSystem
 
         private void SetVolume(float value)
         {
-            AudioManager.Instance.SetMixerValue(groupName, value);
-            PlayerPrefs.SetFloat(name, value);
+            if (AudioManager.Instance.SetMixerValue(groupName, value))
+                PlayerPrefs.SetFloat(groupName, value);
         }
     }
 }

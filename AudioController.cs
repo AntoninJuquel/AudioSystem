@@ -8,6 +8,30 @@ namespace AudioSystem
         [SerializeField] private Sound[] sounds;
         private readonly Dictionary<string, Sound> _sounds = new();
 
+#if UNITY_EDITOR
+        private bool _firstDeserialization = true;
+        private int _arrayLength = 0;
+
+        private void OnValidate()
+        {
+            if (_firstDeserialization)
+            {
+                _arrayLength = sounds.Length;
+                _firstDeserialization = false;
+            }
+            else
+            {
+                if (sounds.Length == _arrayLength) return;
+                if (sounds.Length > _arrayLength)
+                {
+                    for (var i = _arrayLength; i < sounds.Length; i++)
+                        sounds[i] = new Sound();
+                }
+
+                _arrayLength = sounds.Length;
+            }
+        }
+#endif
         protected virtual void Awake()
         {
             foreach (var sound in sounds)

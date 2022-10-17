@@ -11,14 +11,19 @@ namespace AudioSystem
         [field: SerializeField] public string Name { get; private set; }
         [SerializeField] private AudioClip[] clips;
         [SerializeField] private AudioMixerGroup outputAudioMixerGroup;
-
-        [SerializeField] [Range(0f, 1f)] private float defaultVolume = 1f, volume = 1f;
-        [SerializeField] [Range(0f, 1f)] private float spatialBlend;
+        [SerializeField] private bool playOnAwake, loop;
+        [SerializeField] [Range(0f, 1f)] private float volume = 1f;
         [SerializeField] [Range(.1f, 3f)] private float pitch = 1f;
+        [SerializeField] [Range(-1f, 1f)] private float stereoPan;
+        [SerializeField] [Range(0f, 1f)] private float spatialBlend;
         [SerializeField] private float defaultBlendTime;
-        [SerializeField] private bool loop;
 
-        private MonoBehaviour _caller;
+        [SerializeField] [Range(0f, 5f)] private float dopplerLevel = 1;
+        [SerializeField] [Range(0f, 360f)] private float spread;
+        [SerializeField] private AudioRolloffMode volumeRolloff = AudioRolloffMode.Logarithmic;
+        [SerializeField] private float minDistance = 1f, maxDistance = 500f;
+
+        private AudioController _audioController;
         private AudioSource[] _sources;
 
         private int _currentSoundIndex;
@@ -28,21 +33,45 @@ namespace AudioSystem
         public int Count => clips.Length;
         private bool SoundPlaying => _playingCoroutine != null;
 
-        public void Initialize(MonoBehaviour caller)
+        public void Initialize(AudioController audioController)
         {
-            _caller = caller;
+            if (Count == 0)
+            {
+                Debug.LogError($"No clips on {audioController.name}", audioController.gameObject);
+                return;
+            }
+
+            if (Name == string.Empty)
+            {
+                Debug.LogError($"No name for {this} on {audioController.name}", audioController.gameObject);
+                return;
+            }
+
+            _audioController = audioController;
             _sources = new AudioSource[Count];
             _stoppingCoroutines = new Coroutine[Count];
 
             for (var i = 0; i < Count; i++)
             {
-                _sources[i] = _caller.gameObject.AddComponent<AudioSource>();
+                _sources[i] = _audioController.gameObject.AddComponent<AudioSource>();
                 _sources[i].clip = clips[i];
+                _sources[i].outputAudioMixerGroup = outputAudioMixerGroup;
+                _sources[i].playOnAwake = false;
+                _sources[i].loop = loop;
                 _sources[i].volume = 0f;
                 _sources[i].pitch = pitch;
-                _sources[i].loop = loop;
+                _sources[i].panStereo = stereoPan;
                 _sources[i].spatialBlend = spatialBlend;
-                _sources[i].outputAudioMixerGroup = outputAudioMixerGroup;
+                _sources[i].dopplerLevel = dopplerLevel;
+                _sources[i].spread = spread;
+                _sources[i].rolloffMode = volumeRolloff;
+                _sources[i].minDistance = minDistance;
+                _sources[i].maxDistance = maxDistance;
+            }
+
+            if (playOnAwake)
+            {
+                Play(0);
             }
         }
 
@@ -51,6 +80,11 @@ namespace AudioSystem
             var timer = 0f;
             _currentSoundIndex = index;
             _sources[index].Play();
+
+            if (blendTime == 0)
+            {
+                _sources[index].volume = volume;
+            }
 
             while (timer < blendTime)
             {
@@ -67,6 +101,11 @@ namespace AudioSystem
             var timer = 0f;
             var index = _currentSoundIndex;
             var sourceVolume = _sources[index].volume;
+
+            if (blendTime == 0)
+            {
+                _sources[index].volume = 0f;
+            }
 
             while (timer < blendTime)
             {
@@ -85,6 +124,11 @@ namespace AudioSystem
         {
             var timer = 0f;
             var currentPitch = _sources[_currentSoundIndex].pitch;
+
+            if (blendTime == 0)
+            {
+                _sources[_currentSoundIndex].pitch = targetPitch;
+            }
 
             while (timer < blendTime)
             {
@@ -112,20 +156,20 @@ namespace AudioSystem
 
             if (soundIsStopping)
             {
-                _caller.StopCoroutine(_stoppingCoroutines[index]);
+                _audioController.StopCoroutine(_stoppingCoroutines[index]);
                 _stoppingCoroutines[index] = null;
             }
 
             if (SoundPlaying)
             {
-                _caller.StopCoroutine(_playingCoroutine);
+                _audioController.StopCoroutine(_playingCoroutine);
                 if (!switchingSound) return;
-                _stoppingCoroutines[_currentSoundIndex] = _caller.StartCoroutine(StopRoutine(blendTime));
-                _playingCoroutine = _caller.StartCoroutine(PlayRoutine(index, blendTime));
+                _stoppingCoroutines[_currentSoundIndex] = _audioController.StartCoroutine(StopRoutine(blendTime));
+                _playingCoroutine = _audioController.StartCoroutine(PlayRoutine(index, blendTime));
             }
             else
             {
-                _playingCoroutine = _caller.StartCoroutine(PlayRoutine(index, blendTime));
+                _playingCoroutine = _audioController.StartCoroutine(PlayRoutine(index, blendTime));
             }
         }
 
@@ -152,9 +196,9 @@ namespace AudioSystem
         {
             if (!SoundPlaying) return;
 
-            _caller.StopCoroutine(_playingCoroutine);
+            _audioController.StopCoroutine(_playingCoroutine);
             _playingCoroutine = null;
-            _stoppingCoroutines[_currentSoundIndex] = _caller.StartCoroutine(StopRoutine(blendTime));
+            _stoppingCoroutines[_currentSoundIndex] = _audioController.StartCoroutine(StopRoutine(blendTime));
         }
 
         public void Stop()
@@ -170,11 +214,11 @@ namespace AudioSystem
         {
             if (_pitchRoutine != null)
             {
-                _caller.StopCoroutine(_pitchRoutine);
+                _audioController.StopCoroutine(_pitchRoutine);
                 _pitchRoutine = null;
             }
 
-            _pitchRoutine = _caller.StartCoroutine(PitchRoutine(targetPitch, blendTime));
+            _pitchRoutine = _audioController.StartCoroutine(PitchRoutine(targetPitch, blendTime));
         }
 
         public void SetPitch(float targetPitch)
